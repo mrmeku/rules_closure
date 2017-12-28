@@ -44,8 +44,6 @@ def _impl(ctx):
 
   deps = unfurl(ctx.attr.deps, provider="closure_js_library")
   js = collect_js(ctx, deps, css=ctx.attr.css)
-  if not js.srcs:
-    fail("There are no JS source files in the transitive closure")
 
   _validate_css_graph(ctx, js)
 
@@ -178,7 +176,8 @@ def _impl(ctx):
 
   # We shall now pass all transitive sources, including externs files.
   for src in js.srcs:
-    args.append(src.path)
+    if not ctx.attr.manually_specify_js:
+      args.append(src.path)
     inputs.append(src)
 
   # In order for us to feel comfortable creating an optimal experience for 99%
@@ -247,6 +246,7 @@ closure_js_binary = rule(
         "compilation_level": attr.string(default="ADVANCED"),
         "css": attr.label(providers=["closure_css_binary"]),
         "debug": attr.bool(default=False),
+        "manually_specify_js": attr.bool(default=False),
         "defs": attr.string_list(),
         "dependency_mode": attr.string(default="LOOSE"),
         "deps": attr.label_list(
